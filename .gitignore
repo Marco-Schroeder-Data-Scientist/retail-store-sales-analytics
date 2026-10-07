@@ -3,13 +3,23 @@
 
 # Variables de entorno y credenciales
 .env
+.envrc
 
-# Caché de Python
+# Caché y archivos compilados de Python
 __pycache__/
 *.py[cod]
+*.class
 
 # Archivos temporales de Jupyter
 .ipynb_checkpoints/
 
 # Archivos generados localmente
 *.log
+
+# Archivos temporales de herramientas
+tempCodeRunnerFile.py
+
+# Cachés de herramientas de desarrollo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
