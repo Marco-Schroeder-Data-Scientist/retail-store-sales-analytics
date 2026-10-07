@@ -1,0 +1,15 @@
+# Entorno virtual de Python
+.venv/
+
+# Variables de entorno y credenciales
+.env
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+
+# Archivos temporales de Jupyter
+.ipynb_checkpoints/
+
+# Archivos generados localmente
+*.log
