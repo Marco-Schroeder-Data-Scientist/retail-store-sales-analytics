@@ -37,7 +37,7 @@ The project uses **Retail Store Sales: Dirty for Data Cleaning**, published on K
 - **Categories:** 8.
 - **Sales channels:** Online and In-store.
 - **Payment methods:** 3.
-- **Discount states in the processed dataset:** `True`, `False`, and `Unknown`.
+- **Discount statuses in the processed dataset:** `True`, `False`, and `Unknown`, which are transformed in the Power BI report as   `Discounted`, `Not Discounted`, and `No Data`.
 
 Source: [Kaggle — Retail Store Sales: Dirty for Data Cleaning](https://www.kaggle.com/datasets?search=Retail+Store+Sales%3A+Dirty+for+Data+Cleaning)
 
