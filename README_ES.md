@@ -37,7 +37,7 @@ El proyecto utiliza el conjunto de datos **Retail Store Sales: Dirty for Data Cl
 - **Categorías:** 8.
 - **Canales:** Online e In-store.
 - **Medios de pago:** 3.
-- **Estados de descuento en el conjunto procesado:** `True`, `False` y `Unknown`.
+- **Estados de descuento en el conjunto procesado:** `True`, `False` y `Unknown` transformadas en el informe de Power BI como   `Con Descuento`, `Sin Descuento` y `Sin Dato`.
 
 Fuente: [Kaggle — Retail Store Sales: Dirty for Data Cleaning](https://www.kaggle.com/datasets?search=Retail+Store+Sales%3A+Dirty+for+Data+Cleaning)
 
