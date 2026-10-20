@@ -1,170 +1,162 @@
-# Retail Store Sales Analytics
+# Análisis de ventas retail: desempeño comercial y calidad de datos
 
-## Resumen del proyecto
+Proyecto end-to-end de análisis de ventas de una tienda retail (transacciones 2022–2024).
 
-**Retail Store Sales Analytics** es un proyecto de análisis de datos de principio a fin que transforma un conjunto de datos transaccionales de retail con problemas de calidad en una base analítica validada y un informe interactivo en Power BI.
+**Preguntas de negocio que responde el proyecto:**
 
-El proyecto demuestra un flujo de trabajo de análisis orientado al negocio: exploración, preparación y validación de datos; modelado dimensional en PostgreSQL; definición de indicadores con DAX; y comunicación de hallazgos mediante un informe interactivo.
+1. **¿Cómo se comportan las ventas, el ticket y el mix de categorías en el tiempo?**
+2. **¿Hay diferencias relevantes entre canal, método de pago y clientes?**
+3. **¿Qué se puede afirmar (y qué no) sobre los descuentos con la calidad de dato disponible?**
+4. **¿Dónde fallan los datos (producto no identificado, descuento sin estado) y qué implica eso para decidir?**
 
-El análisis aborda las ventas, las categorías y productos, los clientes, los canales, los medios de pago, la evolución temporal y, de manera destacada, las limitaciones para analizar los descuentos debido a la cantidad de registros cuyo estado no está informado.
+**Herramientas:** Python · PostgreSQL · SQL · Power BI · DAX
 
-> Los datos se utilizan con fines de aprendizaje y demostración analítica. Las conclusiones describen este conjunto de datos y no deben interpretarse como evidencia sobre una empresa real.
+---
 
-## Objetivos
+## Hallazgos clave
 
-- Explorar la estructura, la calidad y las limitaciones de los datos.
-- Limpiar y transformar los registros con criterios explícitos y reproducibles.
-- Validar la integridad de los datos y la coherencia de las métricas de venta.
-- Organizar los datos en un modelo dimensional en PostgreSQL.
-- Crear medidas de negocio con DAX.
-- Desarrollar un informe de Power BI que permita explorar resultados y responder preguntas comerciales.
-- Comunicar hallazgos y limitaciones sin atribuir causalidad que los datos no demuestran.
+1. **Bebidas (Beverages) lidera el mix de ventas**  
+   Es la categoría con mayor participación en $; el resto del catálogo está más repartido.
 
-## Herramientas
+2. **El Pareto de productos es disperso**  
+   Los ítems top acumulan una fracción moderada del total: no hay un “producto héroe” que concentre la venta.
 
-- **Python y pandas:** exploración, limpieza, transformación y validación.
-- **PostgreSQL y SQL:** almacenamiento analítico, modelado estrella y validaciones de integridad.
-- **Power BI y DAX:** medidas de negocio, análisis interactivo y visualización.
-- **Jupyter Notebook:** exploración inicial y documentación del análisis.
+3. **Canales Online e In-store están equilibrados**  
+   La diferencia de participación es pequeña (~52% vs ~48% en el período analizado). No hay base fuerte para priorizar un solo canal solo con estos datos.
 
-## Conjunto de datos
+4. **Métodos de pago también repartidos**  
+   Cash, Credit Card y Digital Wallet tienen pesos similares; no surge un medio dominante claro.
 
-El proyecto utiliza el conjunto de datos **Retail Store Sales: Dirty for Data Cleaning**, publicado en Kaggle. El conjunto original contiene 12.575 registros y 11 columnas sobre transacciones de retail.
+5. **Solo 25 clientes en el universo analítico**  
+   Limita cualquier conclusión de “segmentación de clientes” o CRM avanzado. El valor de la página de clientes es de escala y homogeneidad, no de microsegmentos.
 
-- **Período cubierto:** 1 de enero de 2022 al 18 de enero de 2025.
-- **Transacciones:** 12.575.
-- **Clientes identificados:** 25.
-- **Categorías:** 8.
-- **Canales:** Online e In-store.
-- **Medios de pago:** 3.
-- **Estados de descuento en el conjunto procesado:** `True`, `False` y `Unknown` transformadas en el informe de Power BI como   `Con Descuento`, `Sin Descuento` y `Sin Dato`.
+6. **~35% de las ventas sin estado de descuento (Unknown / sin dato)**  
+   Con tickets muy parecidos entre “con descuento”, “sin descuento” y “sin dato”, **no se recomienda decidir política de descuentos** solo con este campo.
 
-Fuente: [Kaggle — Retail Store Sales: Dirty for Data Cleaning](https://www.kaggle.com/datasets?search=Retail+Store+Sales%3A+Dirty+for+Data+Cleaning)
+7. **~10% de las ventas con producto no identificado (Unknown)**  
+   Alerta de calidad de catálogo / pipeline: el análisis a nivel ítem queda limitado; el de categoría sigue siendo usable.
 
-## Proceso de trabajo y validaciones
+8. **No hay costo en el dataset**  
+   No se calcula margen ni beneficio real; el informe se centra en ventas, volumen, ticket y calidad de datos.
 
-### 1. Inspección y análisis exploratorio
+---
 
-Se revisaron las dimensiones, los tipos de datos, los valores faltantes, los posibles duplicados, las distribuciones y las relaciones entre variables. Los resultados de esta etapa orientaron las decisiones de preparación.
+## Recomendaciones
 
-### 2. Limpieza y transformación
+1. **Priorizar limpieza del flag de descuento** (y, si es posible, validar descuento con precio unitario × cantidad vs total pagado).
+2. **Mejorar identificación de productos Unknown** en el maestro / ETL, especialmente si se concentra en categorías de alto volumen.
+3. **No sobreinterpretar canal ni pago**: el negocio se ve homogéneo en esas dimensiones.
+4. **Usar el informe para explorar mix y tendencias**, no para ROI de descuentos ni rentabilidad por producto.
+5. **Tratar enero incompleto (si aplica) fuera del calendario de análisis** para no distorsionar totales y series.
 
-El proceso incluyó:
+Recomendaciones **descriptivas**; no implican causalidad.
 
-- Normalización de nombres de columnas a `snake_case`.
-- Conversión de `transaction_date` a tipo fecha.
-- Conversión de variables categóricas a tipos adecuados para el análisis.
-- Uso de tipos numéricos más eficientes para las métricas de venta.
-- Reconstrucción de los 609 valores faltantes de `price_per_unit` cuando fue posible mediante `total_spent / quantity`.
-- Imputación de los 604 valores faltantes de `quantity` mediante la mediana (6 unidades) y reconstrucción de `total_spent` a partir del precio y la cantidad.
-- Tratamiento de los valores faltantes de `item` como `Unknown`.
-- Conservación de los estados de descuento desconocidos como `Unknown`, sin clasificarlos arbitrariamente como `False`.
+---
 
-### 3. Validación de calidad
+## Dashboard de Power BI
 
-Después de la preparación se comprobó que:
+Archivo: `powerbi/retail_store_sales.pbix` *(ajustar ruta si en el repo es otra)*
 
-- El conjunto procesado contiene 12.575 registros y 11 columnas.
-- No quedan valores nulos en las columnas procesadas; cuando no fue posible recuperar la información, se conservó el valor explícito `Unknown`.
-- No se encontraron transacciones duplicadas.
-- La igualdad `total_spent = price_per_unit × quantity` no presentó diferencias en los 12.575 registros procesados.
-- Las validaciones de integridad referencial en PostgreSQL no detectaron registros huérfanos en las relaciones comprobadas.
-- Los principales indicadores de Power BI se contrastaron con consultas SQL en PostgreSQL.
+| # | Página | Pregunta que responde |
+|---|--------|------------------------|
+| 1 | **Resumen ejecutivo** | ¿Cómo van ventas, ticket y qué alertas de calidad hay (% sin dato de descuento / producto)? |
+| 2 | **Productos y concentración** | ¿Qué categorías e ítems concentran la venta? ¿Cuánto se vende con producto no identificado? |
+| 3 | **Clientes y canal** | ¿Hay diferencia material entre Online / In-store y métodos de pago? |
+| 4 | **Descuentos y límites** | ¿Qué peso tiene cada estado de descuento y por qué no se puede inferir impacto comercial? |
+| 5 | **Deep dive** | Exploración con filtros (año, categoría, canal, pago, descuento) + recordatorio de límites |
 
-La consistencia aritmética de los importes no demuestra por sí sola si se aplicó un descuento ni permite establecer que el precio unitario original corresponda siempre a un precio de lista previo al descuento.
+**Reglas reflejadas en el informe**
 
-### 4. Modelado dimensional en PostgreSQL
+- Calendario de análisis acotado a **años completos 2022–2024** (se excluye el tramo incompleto de 2025 para no distorsionar filtros y series).
+- **% ventas sin dato de descuento** como KPI de alerta (rojo si ≥ 20%).
+- **% ventas con producto Unknown** como alerta de calidad de catálogo.
+- En descuentos: título orientado a **comparativo**, no a “impacto” causal.
+- Categorías presentadas con etiquetas en español (p. ej. Bebidas, Carnicería, Informática, Hogar eléctrico, Alimentación, Muebles, Lácteos, Pastelería).
 
-Los datos se organizaron en una tabla de hechos y dimensiones para facilitar el análisis por fecha, cliente, producto, ubicación/canal y medio de pago:
+---
 
-- `fact_sales`
-- `dim_customer`
-- `dim_product`
-- `dim_date`
-- `dim_payment_method`
-- `dim_location`
+## Datos
 
-El modelo permite analizar los indicadores desde distintas perspectivas y comprobar la coherencia de los resultados agregados.
+| Concepto | Detalle |
+|----------|---------|
+| **Período de análisis** | 2022–2024 (años completos) |
+| **Hechos** | Ventas, unidades, transacciones, ticket, descuento (True / False / Unknown) |
+| **Dimensiones** | Producto, cliente, ubicación/canal, método de pago, calendario |
+| **Clientes** | 25 en el modelo analítico |
+| **Limitación estructural** | Sin costo → sin margen/beneficio |
+| **Calidad** | Alto % de descuento sin dato; parte de ventas con producto Unknown |
 
-## Informe de Power BI
+*(Completar fuente exacta Kaggle/CSV y licencia si aplica en el repo.)*
 
-El informe final se organiza en cinco áreas complementarias:
+---
 
-1. **Executive Overview:** presenta los indicadores generales y la evolución de las ventas para establecer una visión ejecutiva del comportamiento observado.
-2. **Sales Performance:** permite comparar ventas, unidades y participación por categoría, además de profundizar en el desempeño de productos.
-3. **Customer & Channel Behavior:** explora el comportamiento agregado de clientes y compara resultados por canal de venta y medio de pago.
-4. **Discounts & Commercial Behavior:** compara ventas, transacciones y ticket promedio según el estado del descuento. Mantiene separados los estados conocidos y desconocidos para no ocultar la falta de información.
-5. **Deep Dive / Interactive Analysis:** facilita el análisis exploratorio mediante filtros y comparaciones por categoría, período, canal, medio de pago y estado del descuento.
+## Arquitectura y método
 
-El informe combina indicadores generales, tendencias temporales y desgloses comerciales para ayudar a pasar de una visión global a preguntas más específicas. Sus resultados son descriptivos: las diferencias entre grupos no prueban por sí mismas que un canal, medio de pago o descuento haya causado un resultado determinado.
+1. **Exploración y limpieza** del origen de ventas.  
+2. **Modelo dimensional** (hechos + dimensiones de producto, cliente, ubicación, pago, fecha).  
+3. **Calendario de análisis** (`dim_date`) limitado a 2022-01-01 → 2024-12-31.  
+4. **Medidas DAX** de ventas, transacciones, ticket, MoM/YoY, Pareto de producto, % por estado de descuento, alertas de calidad.  
+5. **Informe Power BI** en cinco páginas con foco en decisión y límites del dato.
 
-## Indicadores globales validados
+### Modelo (referencia)
 
-Los siguientes resultados se contrastaron entre Power BI y PostgreSQL:
+- `public fact_sales` (hechos)  
+- `public dim_product`, `public dim_customer`, `public dim_location`, `public dim_payment_method`  
+- `dim_date` (relacionada por `date_key` / `Date Key`; time intelligence sobre `Date`)
 
-| Indicador | Resultado |
-|---|---:|
-| Ventas totales (`Total Sales`) | 1.637.367,00 |
-| Transacciones (`Total Transactions`) | 12.575 |
-| Unidades vendidas (`Total Units`) | 69.900 |
-| Ticket promedio (`Average Transaction Value`) | 130,21 |
-| Precio unitario promedio (`Average Unit Price`) | 23,37 |
-| Unidades promedio por transacción (`Average Units per Transaction`) | 5,56 |
+---
 
-Los importes se presentan en las unidades monetarias del conjunto de datos. La fuente no especifica una moneda inequívoca, por lo que no se asigna un símbolo monetario.
+## Decisiones de modelado y calidad
 
-## Hallazgo y limitación clave: información sobre descuentos
+- Productos **Unknown** no se ocultan: se miden como % de ventas para argumentar mejora de pipeline.
+- Descuento **Unknown / sin dato** se trata como estado explícito, no se imputa.
+- Medidas de % por estado de descuento usan el **mismo campo de fila** en el `ALL()` (evitar el 100% por filtro incorrecto).
+- Se eliminó / no se usa una medida genérica de “Cumulative Sales” incorrecta; el Pareto usa rank + acumulado por producto/cliente.
+- Etiquetas de categoría en español vía Power Query (solo presentación).
 
-La columna original `Discount Applied` contenía **4.199 valores faltantes, equivalentes al 33,4 % de los registros**. Esta proporción es considerable y no se explica únicamente por la ausencia de precio unitario o cantidad, ya que esos campos tenían menos valores faltantes.
+---
 
-Para evitar inventar información, los estados desconocidos se conservaron como `Unknown`, separados de `True` y `False`. El informe permite comparar los indicadores disponibles por estado del descuento, pero la presencia de una categoría desconocida limita la interpretación y la evaluación comercial de los descuentos.
+## Limitaciones
 
-La coherencia entre precio unitario, cantidad e importe total no demuestra que se haya aplicado o no un descuento. Tampoco hay evidencia suficiente para asegurar que `price_per_unit` represente siempre el precio de lista anterior al descuento. Por eso, los resultados no deben interpretarse como una medición concluyente del efecto de los descuentos.
+- **Sin margen:** no hay costo en los datos.
+- **Descuento incompleto:** ~1/3 de las ventas sin estado usable → no evaluar efectividad comercial del descuento.
+- **Producto Unknown:** limita el análisis a nivel ítem.
+- **25 clientes:** no soporta conclusiones finas de comportamiento de cliente.
+- **Canales y pagos homogéneos:** el valor está en constatar equilibrio, no en un “ganador”.
+- Análisis **descriptivo**, sin causalidad.
 
-## Otras limitaciones analíticas
+---
 
-- **Productos desconocidos:** los registros cuyo artículo no pudo identificarse se conservan como `Unknown`. Una categoría asociada a ese valor en el modelo puede ser un artefacto técnico y no debe interpretarse como una categoría comercial real.
-- **Rentabilidad:** el conjunto de datos no aporta información suficiente sobre costos o márgenes para calcular rentabilidad.
-- **Causalidad:** el análisis permite describir patrones y diferencias, pero no demostrar que los descuentos, los canales u otras variables hayan causado cambios en las ventas.
-- **Representatividad:** las conclusiones describen el conjunto de datos utilizado y no deben generalizarse a una empresa real sin evidencia adicional.
+## Cómo reproducir el proyecto
 
-## Estructura del repositorio
+### Requisitos
+
+- Python (si aplica el pipeline del repo)  
+- PostgreSQL (si el modelo está en BD)  
+- Power BI Desktop  
+- Dependencias del repositorio (`requirements.txt` si existe)
+
+### Pasos generales
+
+1. Clonar el repositorio.  
+2. Configurar conexión a datos (CSV / PostgreSQL) sin publicar credenciales.  
+3. Actualizar el modelo en Power BI.  
+4. Validar KPI: ventas, ticket, % sin dato de descuento, % producto Unknown, comparativo de canales.
+
+*(Ajustar comandos y rutas al árbol real del repo.)*
+
+---
+
+## Estructura del repositorio (referencia)
 
 ```text
 retail-store-sales-analytics/
 ├── data/
-│   ├── raw/
-│   │   └── retail_store_sales.csv
-│   └── processed/
-│       └── retail_store_sales_processed.csv
-├── notebooks/
-│   └── 01_extraccion_eda.ipynb
-├── scripts/
-│   ├── 02_limpieza_enriquecimiento.py
-│   └── 03_cargar_postgres.py
-├── SQL/
-│   ├── 01_modelo_estrella.sql
-│   └── 02_validaciones_integridad.sql
-├── Power_BI/
+├── powerbi/
 │   └── retail_store_sales.pbix
-├── requirements.txt
+├── scripts/          # si aplica
+├── sql/              # si aplica
 ├── .gitignore
+├── requirements.txt  # si aplica
 ├── LICENSE
-├── README.md
-└── README_EN.md
-```
-
-Los nombres de archivos y carpetas deben coincidir con los que estén efectivamente publicados en el repositorio.
-
-## Cómo reproducir el proyecto
-
-1. Clonar el repositorio.
-2. Crear un entorno virtual de Python e instalar las dependencias de `requirements.txt`.
-3. Revisar y ejecutar el notebook de exploración.
-4. Ejecutar el script de limpieza y enriquecimiento para generar el archivo procesado.
-5. Configurar PostgreSQL y ejecutar los scripts SQL en el orden correspondiente.
-6. Ejecutar el script de carga para poblar el modelo, de acuerdo con la configuración local.
-7. Abrir `Power_BI/retail_store_sales.pbix` en Power BI Desktop y configurar la conexión a la base de datos local.
-8. Ejecutar las validaciones y contrastar los indicadores principales antes de interpretar los resultados.
-
-Las credenciales y los parámetros de conexión deben configurarse localmente y no deben publicarse en el repositorio.
+└── README.md
